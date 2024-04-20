@@ -4,7 +4,7 @@
     @click="visible = true"
   >
       <img :src="getProductImageSrc(product)" :alt="product.name" class="h-8rem"/>
-      <p class="text-center m-0 text-base text-overflow-ellipsis font-bold">{{ product.name }}</p>
+      <p class="text-center m-0 text-base text-overflow-ellipsis font-bold max-h-1rem">{{ product.name }}</p>
   </div>
   <ProductDialogComponent :container="container" v-model:visible="visible" :product="product"/>
 </template>
