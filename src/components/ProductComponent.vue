@@ -1,10 +1,12 @@
 <template>
   <div
-    class="flex flex-column h-10rem w-8rem border-300 border-1 border-round-sm overflow-hidden"
+    class="flex flex-column h-10rem w-9rem border-300 border-1 border-round-sm overflow-hidden"
     @click="visible = true"
   >
-      <img :src="getProductImageSrc(product)" :alt="product.name" class="h-8rem"/>
-      <p class="text-center m-0 text-base text-overflow-ellipsis font-bold max-h-1rem">{{ product.name }}</p>
+      <div class="h-8rem flex justify-content-center align-items-center background-white">
+        <img :src="getProductImageSrc(product)" :alt="product.name" class="p-1 h-8rem"/>
+      </div>
+      <p class="text-center m-0 text-base text-overflow-ellipsis font-bold">{{ product.name }}</p>
   </div>
   <ProductDialogComponent :container="container" v-model:visible="visible" :product="product"/>
 </template>
@@ -30,4 +32,7 @@ defineProps({
 </script>
 
 <style scoped lang="scss">
+.background-white {
+  background-color: #fff; /* Ensuring background is white */
+}
 </style>
