@@ -20,34 +20,48 @@
                 style: 'table-layout: fixed; width: 100%;'
               }
           }"
+          lazy
         >
           <template #header>
             <div class="flex flex-row justify-content-between">
-              <span class="p-input-icon-left">
-                <i class="pi pi-search" />
+              <IconField iconPosition="left">
+                <InputIcon class="pi pi-search"> </InputIcon>
                 <InputText v-model="filters['global'].value" placeholder="Search" />
-              </span>
+              </IconField>
               <span>
                 <Button @click="openCreateModal">{{ $t('app.Create') }}</Button>
               </span>
             </div>
           </template>
           <Column field="image" :header="$t('c_productEditModal.Image')" >
-            <template #editor="rowData">
+            <template #editor="rowData" v-if="!loading">
               <span class="w-4rem h-4rem mx-1 cursor-pointer image-preview-container">
                 <img class="w-4rem h-4rem" :src="getProductImageSrc(rowData.data)"/>
-                <button ref="previewButton" type="button" class="image-preview-indicator p-image-preview-indicator fileupload" @click="fileInput.click()">
+                <button
+                  ref="previewButton"
+                  type="button"
+                  class="image-preview-indicator p-image-preview-indicator fileupload"
+                  @click="fileInput.click()"
+                >
                   <i class="pi pi-upload"></i>
-                  <input ref="fileInput" type="file" accept="image/*" @change="(e: Event) => onImgUpload(e, (rowData.data as ProductResponse).id)"/>
+                  <input
+                    ref="fileInput"
+                    type="file"
+                    accept="image/*"
+                    @change="(e: Event) => onImgUpload(e, (rowData.data as ProductResponse).id)"
+                  />
                 </button>
               </span>
             </template>
-            <template #body="rowData">
+            <template #body="rowData" v-if="!loading">
               <img :src="getProductImageSrc(rowData.data)" alt="img" class="w-4rem h-4rem mx-1" />
+            </template>
+            <template #body v-else>
+              <Skeleton class="w-8 my-1 h-4rem surface-300"/>
             </template>
           </Column>
           <Column field="name" :header="$t('c_productEditModal.Name')" style="width: 35%">
-            <template #editor="{ data, field }">
+            <template #editor="{ data, field }" v-if="!loading">
               <InputText
                 v-model="data[field]"
                 :pt="{
@@ -59,9 +73,12 @@
                 }"
                 />
             </template>
+            <template #body v-if="loading">
+              <Skeleton class="w-6 my-1 h-2rem surface-300"/>
+            </template>
           </Column>
           <Column field="category" :header="$t('c_productEditModal.Category')" style="width: 15%">
-            <template #editor="{ data, field }">
+            <template #editor="{ data, field }" v-if="!loading">
               <Dropdown
                 :placeholder="$t('c_productEditModal.Please select')"
                 optionLabel="name"
@@ -72,17 +89,20 @@
                   root: 'm-1'
                 }"
               >
-                <template #value="slotProps">
+                <template #value="slotProps" v-if="!loading">
                   {{ slotProps.value.name }}
                 </template>
               </Dropdown>
             </template>
-            <template #body="rowData">
+            <template #body="rowData" v-if="!loading">
               {{ rowData.data.category.name }}
+            </template>
+            <template #body v-else>
+              <Skeleton class="w-6 my-1 h-2rem surface-300"/>
             </template>
           </Column>
           <Column field="priceInclVat" :header="$t('c_productEditModal.Price')"  style="width: 10%">
-            <template #editor="{ data }">
+            <template #editor="{ data }" v-if="!loading">
               <InputNumber
                 v-model="data['editPrice']"
                 mode="currency"
@@ -96,12 +116,15 @@
                 }"
               />
             </template>
-            <template #body="rowData">
+            <template #body="rowData" v-if="!loading">
               {{ formatPrice(rowData.data.priceInclVat) }}
+            </template>
+            <template #body v-else>
+              <Skeleton class="w-6 my-1 h-2rem surface-300"/>
             </template>
           </Column>
           <Column field="alcoholPercentage" :header="$t('c_productEditModal.Alcohol Percentage')" style="width: 6%">
-            <template #editor="{ data, field }">
+            <template #editor="{ data, field }" v-if="!loading">
               <InputNumber
                 v-model="data[field]"
                 suffix="%"
@@ -112,12 +135,15 @@
                 }"
                 />
             </template>
-            <template #body="rowData">
+            <template #body="rowData" v-if="!loading">
               {{ `${rowData.data.alcoholPercentage} %` }}
+            </template>
+            <template #body v-else>
+              <Skeleton class="w-6 my-1 h-2rem surface-300"/>
             </template>
           </Column>
           <Column field="vat" :header="$t('c_productEditModal.VAT')" style="width: 8%">
-            <template #editor="{ data, field }">
+            <template #editor="{ data, field }" v-if="!loading">
               <Dropdown
                   :placeholder="$t('c_productEditModal.Please select VAT')"
                   :options="vatGroups"
@@ -128,18 +154,26 @@
                     root: 'm-1'
                   }"
               >
-                <template #value="slotProps"> {{ `${slotProps.value.percentage} %` }} </template>
+                <template #value="slotProps" v-if="!loading"> {{ `${slotProps.value.percentage} %` }} </template>
               </Dropdown>
             </template>
-            <template #body="rowData">
+            <template #body v-if="loading">
+              <Skeleton class="w-6 my-1 h-2rem surface-300"/>
+            </template>
+            <template #body="rowData" v-else>
               {{ `${rowData.data.vat.percentage} %` }}
             </template>
+
           </Column>
           <Column
             :rowEditor="true"
             bodyStyle="text-align:center"
             style="width: 16%"
-          />
+          >
+            <template #body v-if="loading">
+              <Skeleton class="w-3 my-1 h-2rem surface-300"/>
+            </template>
+          </Column>
         </DataTable>
         <ProductCreateComponent v-model:visible="visible" @productCreated="handleNewProduct"/>
       </CardComponent>
@@ -153,9 +187,11 @@
 </template>
 
 <script setup lang="ts">
+import InputIcon from "primevue/inputicon";
+import IconField from "primevue/iconfield";
 import CardComponent from '@/components/CardComponent.vue';
-import type { Ref } from 'vue';
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { onBeforeMount, type Ref } from "vue";
+import { ref } from 'vue';
 import apiService from '@/services/ApiService';
 import { fetchAllPages } from '@sudosos/sudosos-frontend-common';
 import type {
@@ -176,12 +212,11 @@ import Dropdown from 'primevue/dropdown';
 
 import ContainerCardComponent from '@/components/ContainerCardComponent.vue';
 import ProductCreateComponent from "@/components/ProductCreateComponent.vue";
+import Skeleton from "primevue/skeleton";
 
 const containers: Ref<ContainerWithProductsResponse[]> = ref([]);
-
-onBeforeMount(async () => {});
-
-const products: Ref<ProductResponse[]> = ref([]);
+const loading: Ref<boolean> = ref(true);
+const products: Ref<ProductResponse[]> = ref(new Array(5));
 const filters = ref({
   global: { value: null, matchMode: FilterMatchMode.CONTAINS },
   category: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -211,7 +246,8 @@ const handleNewProduct = async () => {
   );
 };
 
-onMounted(async () => {
+onBeforeMount(async () => {
+  products.value = new Array(5);
   products.value = await fetchAllPages<ProductResponse>(
     0,
     Number.MAX_SAFE_INTEGER,
@@ -232,6 +268,7 @@ onMounted(async () => {
       })
     );
   });
+  loading.value = false;
 });
 
 const updateRow = async (event: DataTableRowEditSaveEvent) => {
@@ -252,12 +289,9 @@ const updateRow = async (event: DataTableRowEditSaveEvent) => {
 const onImgUpload = async (event: Event, productId: number) => {
   const el = (event.target as HTMLInputElement);
   if(el == null || el.files == null) return;
-  console.log('uploading')
-  console.log(el.files[0])
-  console.log(productId)
   await apiService.products.updateProductImage(productId, el.files[0]);
   handleNewProduct();
-}
+};
 </script>
 
 <style scoped lang="scss">

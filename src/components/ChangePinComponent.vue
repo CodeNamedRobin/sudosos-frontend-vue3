@@ -11,7 +11,7 @@
         <InputText v-bind="pinConfirm" />
         <small class="warning">{{errors.pinConfirm || '&nbsp;'}}</small>
       </div>
-      <div style="margin-top: 1rem">
+      <div style="margin-top: 1rem" class="flex justify-content-end">
         <Button type="submit" :label="t('profile.pinChange')" />
       </div>
     </form>
@@ -47,7 +47,7 @@ const changeUserPin = handleSubmit(async (values) => {
         toast.add({
           severity: "success",
           summary: "Success",
-          detail: `${t('passwordUpdated')}`,
+          detail: `${t('userDetails.passwordUpdated')}`,
           life: 3000,
         });
       })

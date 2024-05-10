@@ -36,8 +36,9 @@
                     <label for="secondDate">{{ t('fine.secondDate') }}</label>
                   </span>
                   <Button type="submit">{{ t('fine.apply') }}</Button>
+                  <Button @click="notifyUsers" severity="info">{{ t('fine.notify') }}</Button>
+                  <ProgressSpinner class="h-2rem ml-0" v-if="isNotifying"/>
                 </form>
-                <Button @click="notifyUsers" severity="info">{{ t('fine.notify') }}</Button>
                 <Button @click="handoutFines">{{ t('fine.handout') }}</Button>
               </div>
               <p class="text-red-500">
@@ -51,7 +52,7 @@
             </div>
           </template>
           <Column selectionMode="multiple" />
-          <Column field="id" :header="t('fine.gewisId')" />
+          <Column field="gewisId" :header="t('fine.gewisId')" />
           <Column field="fullName" :header="t('fine.name')" />
           <Column field="firstBalance" :header="t('fine.firstBalance')">
             <template #body="slotProps">
@@ -73,15 +74,28 @@
           :value="fineHandoutEvents"
           @row-click="(e: any) => openHandoutEvent(e.data.id)"
         >
-          <Column field="id" id="id" :header="t('fine.id')" />
+          <Column field="id" id="id" :header="t('fine.id')">
+            <template #body v-if="isLoading">
+              <Skeleton class="w-4 my-1 h-1rem surface-300"/>
+            </template>
+          </Column>
           <Column field="createdAt" id="date" :header="t('fine.date')">
-            <template #body="slotProps">{{ formatDateTime(new Date(slotProps.data.createdAt)) }}</template>
+            <template #body v-if="isLoading">
+              <Skeleton class="w-7 my-1 h-1rem surface-300"/>
+            </template>
+            <template #body="slotProps" v-else>{{ formatDateTime(new Date(slotProps.data.createdAt)) }}</template>
           </Column>
           <Column field="referenceDate" id="referenceDate" :header="t('fine.referenceDate')">
-            <template #body="slotProps">{{ formatDateTime(new Date(slotProps.data.referenceDate)) }}</template>
+            <template #body v-if="isLoading">
+              <Skeleton class="w-4 my-1 h-1rem surface-300"/>
+            </template>
+            <template #body="slotProps" v-else>{{ formatDateTime(new Date(slotProps.data.referenceDate)) }}</template>
           </Column>
           <Column id="info" :header="t('fine.info')" >
-            <template #body>
+            <template #body v-if="isLoading">
+              <Skeleton class="w-2 my-1 h-1rem surface-300"/>
+            </template>
+            <template #body v-else>
               <i class="pi pi-info-circle"/>
             </template>
           </Column>
@@ -127,12 +141,13 @@ import { formatDateTime, formatPrice } from "@/utils/formatterUtils";
 import { useRouter } from "vue-router";
 import { type DineroObject } from 'dinero.js';
 import { floor, min } from "lodash";
-import type { FineHandoutEventResponse } from "@sudosos/sudosos-client";
+import type { FineHandoutEventResponse, UserResponse } from "@sudosos/sudosos-client";
 import { fetchAllPages } from "@sudosos/sudosos-frontend-common";
-import { date } from "yup";
 import { useToast } from "primevue/usetoast";
 import type { AxiosError } from "axios";
 import { handleError } from "@/utils/errorUtils";
+import Skeleton from "primevue/skeleton";
+import ProgressSpinner from "primevue/progressspinner";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -148,10 +163,12 @@ const { defineField, handleSubmit } = useForm({
 });
 const toast = useToast();
 const selection = ref();
+const isNotifying: Ref<boolean> = ref(false);
 const [firstDate, firstDateAttrs] = defineField('firstDate');
 const [secondDate, secondDateAttrs] = defineField('secondDate');
 const showModal: Ref<boolean> = ref(false);
 const selectedHandoutEvent: Ref<FineHandoutEventResponse | undefined> = ref();
+const isLoading: Ref<boolean> = ref(true);
 const totalFines: Ref<DineroObject> = ref({
   amount: 0,
   currency: 'EUR',
@@ -168,7 +185,7 @@ const modalTotalFines: Ref<DineroObject> = ref({
   precision: 2
 });
 const showMessage: Ref<boolean>  = ref(false);
-const fineHandoutEvents: Ref<Array<FineHandoutEventResponse>> = ref([]);
+const fineHandoutEvents: Ref<Array<FineHandoutEventResponse>> = ref(new Array(10));
 const handlePickedDates = handleSubmit(async (values) => {
   const result = await apiService.debtor.calculateFines(
     [values.firstDate.toISOString(), values.secondDate.toISOString()],
@@ -177,7 +194,10 @@ const handlePickedDates = handleSubmit(async (values) => {
   userStore.users.forEach((user: any) => {
     userFullNameMap[user.id] = `${user.firstName} ${user.lastName}`;
   });
+  const deletedUsers = userStore.getDeletedUsers.map((u: UserResponse) => u.id);
+  const activeUsers = userStore.getActiveUsers.map((u: UserResponse) => u.id);
   eligibleUsers.value = result.data.map((item: any) => {
+
     const fullName = userFullNameMap[item.id];
 
     // Extract balances from the item
@@ -185,12 +205,14 @@ const handlePickedDates = handleSubmit(async (values) => {
 
     return {
       ...item,
+      // @ts-ignore
+      gewisId: (userStore.users.find((u: UserResponse) => u.id === item.id) as UserResponse).gewisId || undefined,
       fullName,
       // Assign first and last balance based on the first and second items in the balances array
       firstBalance,
       lastBalance: secondBalance,
     };
-  });
+  }).filter((u: any) => !deletedUsers.includes(u.id) && activeUsers.includes(u.id));
   const totalDebtAmount = eligibleUsers.value.reduce((accumulator: number, current: any) => {
     return accumulator + current.firstBalance.amount.amount; // Use getAmount() to access the value
   }, 0);
@@ -218,7 +240,7 @@ onMounted(async () => {
     // @ts-ignore
     (take, skip) => apiService.debtor.returnAllFineHandoutEvents(take, skip)
   );
-  console.log(fineHandoutEvents.value);
+  isLoading.value = false;
 });
 const openHandoutEvent = async (eventId: number) => {
   selectedHandoutEvent.value = await apiService.debtor.returnSingleFineHandoutEvent(eventId).then((res) => {
@@ -240,10 +262,21 @@ const openHandoutEvent = async (eventId: number) => {
 };
 
 const notifyUsers = async () => {
-  await apiService.debtor.notifyAboutFutureFines({
+  isNotifying.value = true;
+  apiService.debtor.notifyAboutFutureFines({
     userIds: selection.value.map((item: any) => item.id),
     referenceDate: secondDate.value?.toISOString() || new Date().toISOString()
-  });
+  })
+    .then(() => {
+      toast.add({
+        summary: t('successMessages.success'),
+        detail: t('successMessages.finesNotified'),
+        life: 3000,
+        severity: 'success',
+      });
+      isNotifying.value = false;
+      selection.value = [];
+    });
 };
 
 const handoutFines = async () => {
@@ -254,14 +287,17 @@ const handoutFines = async () => {
   await apiService.debtor.handoutFines({
     userIds: selection.value.map((item: any) => item.id),
     referenceDate: firstDate.value.toISOString(),
-  }).then(() => {
-    toast.add({
-      summary: t('successMessages.success'),
-      detail: t('successMessages.finesHandedOut'),
-      life: 3000,
-      severity: 'success',
-    });
-  }).catch((err: AxiosError) => handleError(err, toast));
+  })
+    .then(() => {
+      toast.add({
+        summary: t('successMessages.success'),
+        detail: t('successMessages.finesHandedOut'),
+        life: 3000,
+        severity: 'success',
+      });
+    })
+    .catch((err: AxiosError) => handleError(err, toast))
+    .finally(() => selection.value = []);
 };
 </script>
 

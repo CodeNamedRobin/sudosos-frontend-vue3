@@ -1,76 +1,70 @@
 <template>
   <CardComponent :action="action" :header="header" :router-link="routerLink" class="w-full">
     <DataTable
-        :rows=rows
-        :value="mutations"
-        :rowsPerPageOptions="[5, 10, 25, 50, 100]"
-        :paginator="paginator"
-        lazy
-        @page="onPage($event)"
-        :totalRecords="totalRecords"
-        >
-      <Column 
-          field="moment" 
-          style="width: 30%" 
-          :header="$t('transactions.when')"
-          >
-          <template #body="mutation">
-            <span class="hidden sm:block">{{ mutation.data.moment.toDateString() }}</span>
-            <span class="sm:hidden">{{ mutation.data.moment.toLocaleDateString('nl-NL', {
+      :rows="rows"
+      :value="mutations"
+      :rowsPerPageOptions="[5, 10, 25, 50, 100]"
+      :paginator="paginator"
+      lazy
+      @page="onPage($event)"
+      :totalRecords="totalRecords"
+    >
+      <Column field="moment" style="width: 30%" :header="$t('transactions.when')">
+        <template #body v-if="isLoading">
+          <Skeleton class="w-6 my-1 h-1rem surface-300"/>
+        </template>
+        <template #body="mutation" v-else>
+          <span class="hidden sm:block">{{ mutation.data.moment.toDateString() }}</span>
+          <span class="sm:hidden">{{
+            mutation.data.moment.toLocaleDateString('nl-NL', {
               dateStyle: 'short'
-            }) }}</span>
-          </template>
-        </Column>
+            })
+            }}
+          </span>
+        </template>
+      </Column>
 
       <Column field="mutationDescription" style="width: 30%" :header="$t('transactions.what')">
-        <template #body="mutation">
-          {{ 
-            getDescription(mutation.data)
-          }}
-        </template>  
-      
+        <template #body v-if="isLoading">
+          <Skeleton class="w-6 my-1 h-1rem surface-300"/>
+        </template>
+        <template #body="mutation" v-else>
+          {{ getDescription(mutation.data) }}
+        </template>
       </Column>
 
       <Column field="change" style="width: 30%" :header="$t('transactions.amount')">
-        <template #body="mutation">
-          <div 
-            v-if="mutation.data.to && mutation.data.to.id == user.id" 
-            style="
-              color: #198754;
-            "
-            class="font-bold"
-            >
+        <template #body v-if="isLoading">
+          <Skeleton class="w-3 my-1 h-1rem surface-300"/>
+        </template>
+        <template #body="mutation" v-else>
+          <div
+            v-if="mutation.data.type == FinancialMutationType.DEPOSIT
+            || mutation.data.type == FinancialMutationType.INVOICE
+            || mutation.data.type == FinancialMutationType.WAIVED_FINE"
+            style="color: #198754" class="font-bold">
             {{ formatPrice((mutation.data as FinancialMutation).amount) }}
           </div>
 
-          <div 
-            v-else-if="mutation.data.type == 3" 
-            style="
-              color: #D40000;
-            "
-            class="font-bold"
-            >
-            <!-- <template #icon>
-              <i class="pi p-inline-message-icon pi-exclamation-triangle"></i>
-            </template> -->
+          <div v-else-if="mutation.data.type == FinancialMutationType.FINE" style="color: #d40000" class="font-bold">
             {{ formatPrice((mutation.data as FinancialMutation).amount, true) }}
           </div>
 
-          <div 
-            v-else 
-            severity="info"
-            >
-              {{ formatPrice((mutation.data as FinancialMutation).amount, true) }}
-        </div>
-        </template>  
+          <div v-else severity="info">
+            {{ formatPrice((mutation.data as FinancialMutation).amount, true) }}
+          </div>
+        </template>
       </Column>
 
       <Column field="" style="width: 10%">
-        <template #body="mutation">
-            <i 
-              class="pi pi-info-circle cursor-pointer"
-              @click="() => openModal(mutation.data.id, mutation.data.type)"
-            />
+        <template #body v-if="isLoading">
+          <Skeleton class="w-3 my-1 h-1rem surface-300"/>
+        </template>
+        <template #body="mutation" v-else>
+          <i
+            class="pi pi-info-circle cursor-pointer"
+            @click="() => openModal(mutation.data.id, mutation.data.type)"
+          />
         </template>
       </Column>
     </DataTable>
@@ -83,35 +77,32 @@
   />
 </template>
 
-
 <script lang="ts" setup>
-import DataTable from "primevue/datatable";
 import type { DataTablePageEvent } from "primevue/datatable";
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
-import InlineMessage from 'primevue/inlinemessage';
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
 import CardComponent from "@/components/CardComponent.vue";
+import Skeleton from "primevue/skeleton";
+import { formatPrice } from "@/utils/formatterUtils";
 import type {
   BaseTransactionResponse,
-  FinancialMutationResponse, PaginatedBaseTransactionResponse,
+  FinancialMutationResponse,
+  PaginatedBaseTransactionResponse,
   PaginatedFinancialMutationResponse,
   TransferResponse
 } from "@sudosos/sudosos-client";
-import { onMounted, ref } from "vue";
-import type { Ref } from "vue";
+import { onBeforeMount, onMounted, type Ref } from "vue";
+import { ref } from "vue";
 import MutationModal from "@/components/Mutations/MutationModal.vue";
 import {
+  type FinancialMutation,
+  FinancialMutationType,
   parseFinancialTransactions,
   parseTransaction,
-  parseTransfer,
-  type FinancialMutation,
-  FinancialMutationType
+  parseTransfer
 } from "@/utils/mutationUtils";
-import { formatPrice } from "@/utils/formatterUtils";
-import { useUserStore } from "@sudosos/sudosos-frontend-common";
-import "primeicons/primeicons.css"
-
-const user = useUserStore().getCurrentUser.user!!
+import "primeicons/primeicons.css";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps({
   action: {
@@ -137,28 +128,35 @@ const props = defineProps({
   callbackFunction: {
     type: Function,
     required: true,
+  },
+  rowsAmount: {
+    type: Number,
+    required: false
   }
 });
 
-const mutations = ref<FinancialMutation[]>();
+const mutations = ref<FinancialMutation[]>(new Array(10));
 const selectedMutationId = ref<number>(-1);
 const selectedMutationType = ref<FinancialMutationType>(FinancialMutationType.TRANSACTION);
 const mutationShow = ref<boolean>(false);
 const totalRecords = ref<number>(0);
+const isLoading: Ref<boolean> = ref(true);
+const { t } = useI18n();
 
-
-const rows: Ref<number> = ref(10);
+const rows: Ref<number> = ref(props.rowsAmount || 10);
 onMounted( async () => {
   const initialMutations = await getMutations(rows.value, 0);
   mutations.value = parseFinancialMutations(initialMutations);
-  totalRecords.value = initialMutations._pagination.count || 0
+  totalRecords.value = initialMutations._pagination.count || 0;
+  isLoading.value = false;
 });
 
 function isPaginatedBaseTransactionResponse(obj: any): obj is PaginatedBaseTransactionResponse {
   return obj.records && obj.records.length > 0 && 'id' in obj.records[0];
 }
 
-function parseFinancialMutations(mutations: PaginatedFinancialMutationResponse | PaginatedBaseTransactionResponse): FinancialMutation[] {
+function parseFinancialMutations(mutations: PaginatedFinancialMutationResponse | PaginatedBaseTransactionResponse)
+  : FinancialMutation[] {
   let result: FinancialMutation[] = [];
   if(isPaginatedBaseTransactionResponse(mutations)) {
     mutations.records.forEach((mutation: BaseTransactionResponse) => {
@@ -198,20 +196,25 @@ async function getMutations(take: number, skip: number):
 function getDescription(mutation: FinancialMutation) {
   switch (mutation.type) {
     case FinancialMutationType.TRANSACTION: {
-      return "Payment"
+      return t('c_recentTransactionsTable.payment');
     }
     case FinancialMutationType.DEPOSIT: {
-      return "Top up"
+      return t('c_recentTransactionsTable.topUp');
     }
     case FinancialMutationType.FINE: {
-      return "Fine"
+      return t('c_recentTransactionsTable.fine');
+    }
+    case FinancialMutationType.WAIVED_FINE: {
+      return t('c_recentTransactionsTable.waivedFine');
+    }
+    case FinancialMutationType.INVOICE: {
+      return t('c_recentTransactionsTable.invoice');
     }
     default: {
-      return "Could not find"
+      return t('c_recentTransactionsTable.unknown');
     }
   }
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>
