@@ -9,9 +9,9 @@ jobs:
     # Only run if the comment contains the /fast-forward command
     # and we are trying to merge from 'develop' into 'master'.
     if: ${{ contains(github.event.comment.body, '/fast-forward')
-      && github.event.issue.pull_request }}
-    #  && github.event.pull_request.base.ref == 'main'
-    #  && github.event.pull_request.head.ref == 'develop' }}
+      && github.event.issue.pull_request
+      && github.event.pull_request.base.ref == 'main'
+      && github.event.pull_request.head.ref == 'develop' }}
     runs-on: ubuntu-latest
 
     permissions:
