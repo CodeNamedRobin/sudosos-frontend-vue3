@@ -27,6 +27,8 @@ import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 import { editPasswordSchema } from "@/utils/validation-schema";
 import { handleError } from "@/utils/errorUtils";
+import { onMounted, type Ref, ref } from 'vue';
+import router from '@/router';
 
 const toast = useToast();
 const userStore = useUserStore();
@@ -37,11 +39,15 @@ const { defineComponentBinds, handleSubmit, errors } = useForm({
 
 const password = defineComponentBinds('password', {});
 const passwordConfirm = defineComponentBinds('passwordConfirm', {});
-
-let isLocal = false;
-if(userStore.getCurrentUser.user) {
-  isLocal = (userStore.getCurrentUser.user.type == "LOCAL_USER");
-}
+const isLocal: Ref<boolean> = ref(false);
+onMounted(async() => {
+  if(userStore.getCurrentUser.user) {
+    isLocal.value = (userStore.getCurrentUser.user.type == "LOCAL_USER");
+  } else {
+    await router.replace({ path: "/error" });
+    return;
+  }
+});
 
 const changeUserPassword = handleSubmit(async (values) => {
   if (userStore.getCurrentUser.user) {
