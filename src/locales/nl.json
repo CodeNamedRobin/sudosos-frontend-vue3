@@ -1,7 +1,7 @@
 {
   "apiError": {
-    "error": "Fout",
-    "500": "Iets gaat fout, open alstublieft een probleem op {link} waarin u het probleem beschrijft."
+    "500": "Iets gaat fout, open alstublieft een probleem op {link} waarin u het probleem beschrijft.",
+    "error": "Fout"
   },
   "app": {
     "BAC": "BAC",
@@ -22,16 +22,23 @@
     "User overview": "Gebruikers overzicht"
   },
   "balance": {
+    "Balance after": "Balans na opwaarderen:",
     "Balance increase amount": "Verhoog saldo:",
-    "Payment button": "Betaal",
     "Increase balance": "Verhoog saldo",
+    "Payment button": "Betaal",
     "Price": "Prijs",
     "Start payment": "Betaal",
-    "minPayment": "Let op: minimum bedrag is €10 of moet schulden afbetalen.",
-    "Balance after": "Balans na opwaarderen:"
+    "minPayment": "Let op: minimum bedrag is €10 of moet schulden afbetalen."
   },
   "banner": {
+    "Active": "Actief",
+    "Banner overview": "Banner overzicht",
     "Banners": "Banners",
+    "Create banner": "Maak nieuwe banner",
+    "Edit banner": "Pas banner aan",
+    "Filter active": "Filter actief",
+    "Filter not expired": "Filter niet verlopen",
+    "Not active": "Niet actief",
     "active": "Actief: ",
     "duration": "Tijdsduur: ",
     "name": "Naam: ",
@@ -40,14 +47,7 @@
     "seconds": "Seconden",
     "submit": "Toepassen",
     "till": "tot",
-    "timespan": "Tijdspan: ",
-    "Banner overview": "Banner overzicht",
-    "Filter active": "Filter actief",
-    "Filter not expired": "Filter niet verlopen",
-    "Active": "Actief",
-    "Not active": "Niet actief",
-    "Edit banner": "Pas banner aan",
-    "Create banner": "Maak nieuwe banner"
+    "timespan": "Tijdspan: "
   },
   "c_ContainerAssign": {
     "Assign product": "Product toewijzen",
@@ -193,16 +193,16 @@
     "copyright": "© 2023 GEWIS",
     "localAccount": "Login met een lokaal account"
   },
+  "manageProducts": {
+    "Add product": "Product toevoegen",
+    "Containers": "Containers",
+    "Manage all products and containers": "Beheer alle producten en containers"
+  },
   "payment": {
     "pay": "betaal"
   },
   "pointOfSaleOverview": {
     "Point of sale overview": "Verkooppunt overzicht"
-  },
-  "manageProducts": {
-    "Add product": "Product toevoegen",
-    "Containers": "Containers",
-    "Manage all products and containers": "Beheer alle producten en containers"
   },
   "posInfo": {
     "Edit": "Bewerken",
@@ -213,12 +213,12 @@
     "ownedBy": "Eigendom van "
   },
   "profile": {
-    "individualDataAnalysis": "Individuele Data Analyse:",
     "canGoIntoDebt": "Gebruiker mag in de schuld",
     "changePassword": "Verander wachtwoord",
     "changeUserInfo": "Verander gebruikersinformatie",
     "emailAddress": "Emailadres",
     "firstName": "Voornaam",
+    "individualDataAnalysis": "Individuele Data Analyse:",
     "keyGet": "Verkrijg API sleutel",
     "keyGetNew": "Verkrijg een nieuwe API sleutel",
     "keyNotSaved": "LET OP: je API sleutel wordt niet opgeslagen, dus kopieer deze nu",
@@ -284,6 +284,7 @@
     "User Transactions": "Gebruikerstransacties",
     "Usertype": "Gebruikerstype",
     "passwordUpdated": "Wachtwoord is succesvol geüpdatet",
+    "pinUpdated": "PIN succesvol geüpdatet",
     "updatedUserInfo": "Profiel is succesvol geüpdatet.",
     "userInfoUpdated": "Profiel is succesvol aangepast"
   },

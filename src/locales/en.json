@@ -30,16 +30,23 @@
     "User overview": "User overview"
   },
   "balance": {
-    "Balance increase amount": "Increase balance:",
-    "Payment button": "Top up",
-    "Increase balance": "Increase balance",
-    "Price": "Price",
-    "minPayment": "Note: minimum topup is €10 or needs to pay off debt.",
     "Balance after": "Balance after:",
-    "Start payment": "Start payment"
+    "Balance increase amount": "Increase balance:",
+    "Increase balance": "Increase balance",
+    "Payment button": "Top up",
+    "Price": "Price",
+    "Start payment": "Start payment",
+    "minPayment": "Note: minimum topup is €10 or needs to pay off debt."
   },
   "banner": {
+    "Active": "Active",
+    "Banner overview": "Banner overview",
     "Banners": "Banners",
+    "Create banner": "Create banner",
+    "Edit banner": "Edit banner",
+    "Filter active": "Filter active",
+    "Filter not expired": "Filter not expired",
+    "Not active": "Not active",
     "active": "Active: ",
     "duration": "Duration: ",
     "name": "Name: ",
@@ -48,14 +55,7 @@
     "seconds": "Seconds",
     "submit": "Submit",
     "till": "till",
-    "timespan": "Timespan: ",
-    "Banner overview": "Banner overview",
-    "Filter active": "Filter active",
-    "Filter not expired": "Filter not expired",
-    "Active": "Active",
-    "Not active": "Not active",
-    "Edit banner": "Edit banner",
-    "Create banner": "Create banner"
+    "timespan": "Timespan: "
   },
   "c_ContainerAssign": {
     "Assign product": "Assign product",
@@ -221,7 +221,8 @@
     "Validity": "Validity",
     "cancel": "cancel",
     "new social drink cards": "new social drink cards",
-    "save": "save"
+    "save": "save",
+    "quick": "Quick Overview"
   },
   "c_userTable": {
     "Select Type": "Select Type",
@@ -381,6 +382,7 @@
     "User Transactions": "User Transactions",
     "Usertype": "Usertype",
     "passwordUpdated": "Password successfully updated",
+    "pinUpdated": "Succesfully updated pin",
     "updatedUserInfo": "Succesfully updated user info.",
     "userInfoUpdated": "User information successfully updated"
   },
